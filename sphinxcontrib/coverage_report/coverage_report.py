@@ -149,5 +149,6 @@ def _sphinx_needs_update(app: Sphinx, config: Config) -> None:
 def _register_directives(app: Sphinx) -> None:
     """Register all coverage directives with Sphinx. Called on builder-inited."""
     # Directives are imported here to avoid circular imports at module load time.
-    # Full implementations added in Tasks 6, 9, and 10.
-    pass  # Populated incrementally by later tasks
+    from sphinxcontrib.coverage_report.directives.coverage_results import CoverageResultsDirective
+    app.add_directive("coverage-results", CoverageResultsDirective)
+    # coverage-module, coverage-package, coverage-function, coverage-report added in Tasks 9 & 10
