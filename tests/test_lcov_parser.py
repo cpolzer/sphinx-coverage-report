@@ -1,7 +1,10 @@
 import os
 import pytest
 from sphinxcontrib.coverage_report.lcovparser import LcovParser
-from sphinxcontrib.coverage_report.exceptions import CoverageReportFileNotFound
+from sphinxcontrib.coverage_report.exceptions import (
+    CoverageReportFileNotFound,
+    CoverageReportFileInvalid,
+)
 
 @pytest.fixture
 def parser(fixture_dir):
@@ -37,3 +40,25 @@ def test_parse_functions(parser):
     assert fn["line_start"] == 10
     fn2 = next(f for f in mod["functions"] if f["name"] == "another_function")
     assert fn2["hits"] == 0
+
+def test_malformed_lcov_raises(tmp_path):
+    bad = tmp_path / "bad.info"
+    bad.write_text("FNDA:notanumber,myfunc\n")
+    with pytest.raises(CoverageReportFileInvalid):
+        LcovParser(str(bad)).parse()
+
+def test_parse_second_module(parser):
+    """utils.py has no functions and one missed line."""
+    mods = parser.parse()["packages"][0]["modules"]
+    utils = next(m for m in mods if m["name"] == "utils.py")
+    assert utils["filename"] == "mypackage/utils.py"
+    assert utils["functions"] == []
+    assert utils["lines_valid"] == 2
+    assert utils["lines_covered"] == 1
+    assert 3 in utils["missed_lines"]
+
+def test_parse_module_branch_fields(parser):
+    mod = parser.parse()["packages"][0]["modules"][0]
+    assert mod["branches_valid"] == 2
+    assert mod["branches_covered"] == 1
+    assert mod["branch_rate"] == pytest.approx(0.5)
