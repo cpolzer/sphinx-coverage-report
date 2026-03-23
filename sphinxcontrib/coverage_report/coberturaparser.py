@@ -1,3 +1,5 @@
+"""Parser for Cobertura XML coverage reports."""
+
 import os
 from lxml import etree
 from sphinxcontrib.coverage_report.exceptions import (
@@ -7,22 +9,49 @@ from sphinxcontrib.coverage_report.exceptions import (
 
 
 class CoberturaParser:
+    """Parse a Cobertura-format XML coverage report into a plain dict structure."""
+
     def __init__(self, xml_path, xsd_path=None):
+        """Initialise the parser and load the XML document.
+
+        Args:
+            xml_path: Path to the Cobertura XML file.
+            xsd_path: Optional path to an XSD schema for validation.  When
+                omitted the bundled ``cobertura.xsd`` is used.
+
+        Raises:
+            CoverageReportFileNotFound: If *xml_path* does not exist.
+            CoverageReportFileInvalid: If *xml_path* cannot be parsed as XML.
+        """
         if not os.path.exists(xml_path):
             raise CoverageReportFileNotFound(f"File not found: {xml_path}")
         self.xml_path = xml_path
         self.xsd_path = xsd_path or os.path.join(
             os.path.dirname(__file__), "schemas", "cobertura.xsd"
         )
-        self._doc = etree.parse(xml_path)
+        try:
+            self._doc = etree.parse(xml_path)
+        except etree.XMLSyntaxError as exc:
+            raise CoverageReportFileInvalid(
+                f"Cannot parse {xml_path}: {exc}"
+            ) from exc
 
     def validate(self):
+        """Validate the document against the Cobertura XSD schema.
+
+        Returns ``True`` when the schema file is absent (schema is optional).
+        """
         if not os.path.exists(self.xsd_path):
             return True  # schema optional
         schema = etree.XMLSchema(etree.parse(self.xsd_path))
         return schema.validate(self._doc)
 
     def parse(self):
+        """Parse the XML document and return a coverage report dict.
+
+        Returns:
+            A dict with top-level coverage metrics and a ``packages`` list.
+        """
         root = self._doc.getroot()
         return {
             "line_rate": float(root.get("line-rate", 0)),
@@ -37,6 +66,12 @@ class CoberturaParser:
         }
 
     def _parse_packages(self, root):
+        """Parse all ``<package>`` elements under *root*.
+
+        Returns:
+            A list of package dicts, each containing a ``modules`` list with
+            per-class data and numeric rollup totals derived from those classes.
+        """
         packages = []
         for pkg in root.findall(".//package"):
             classes = pkg.findall(".//class")
@@ -62,6 +97,12 @@ class CoberturaParser:
         return packages
 
     def _parse_class(self, cls):
+        """Parse a single ``<class>`` element into a module dict.
+
+        Returns:
+            A dict with coverage metrics, missed line numbers, and an empty
+            ``functions`` list (Cobertura does not carry function-level data).
+        """
         missed = []
         lines_valid = lines_covered = branches_valid = branches_covered = 0
         for line in cls.findall(".//line"):
