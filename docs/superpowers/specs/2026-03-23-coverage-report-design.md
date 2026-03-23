@@ -437,4 +437,4 @@ filename, package, complexity, hits, line_start
 - Sphinx doc-build tests for each directive (mirrors `test_basic_doc.py` pattern)
 - Threshold status tests: assert `status == "failing"` below threshold, `"passing"` at or above
 - Cross-link tests: assert `cr_link()` resolves correct test-case IDs
-- nox matrix: Python 3.10–3.12 × sphinx-needs versions (pre-6.0, 6.x, 7.x, 8.x)
+- nox matrix: Python 3.10–3.12 × sphinx-needs versions (6.x, 7.x, 8.x); pre-6.0 is outside the supported range
