@@ -98,10 +98,13 @@ class JsonParser:
         bpct = summary.get("percent_branches_covered", 0.0)
         functions = []
         for fn_name, fn_data in data.get("functions", {}).items():
+            fn_summary = fn_data.get("summary", {})
+            fn_statements = fn_summary.get("num_statements", 0)
+            fn_covered = fn_summary.get("covered_lines", 0)
             functions.append({
                 "name": fn_name,
                 "line_start": fn_data.get("start_line", 0),
-                "line_rate": 1.0 if fn_data.get("executed_lines") else 0.0,
+                "line_rate": fn_covered / fn_statements if fn_statements else 0.0,
                 "hits": len(fn_data.get("executed_lines", [])),
             })
         return {

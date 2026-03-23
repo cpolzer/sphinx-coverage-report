@@ -45,6 +45,7 @@ def test_parse_function_shape(parser):
     assert fn["name"] == "my_function"
     assert fn["line_start"] == 10
     assert fn["hits"] == 2  # len(executed_lines)
+    assert fn["line_rate"] == pytest.approx(2 / 3)  # 2 covered / 3 statements
 
 def test_parse_utils_no_functions(parser):
     mods = parser.parse()["packages"][0]["modules"]
