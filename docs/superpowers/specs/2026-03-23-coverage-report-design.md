@@ -18,7 +18,7 @@
 - Produce both standalone docutils tables (no sphinx-needs dependency) and sphinx-needs "need" nodes
 - Compute pass/fail status against configurable thresholds
 - Enable cross-linking from coverage nodes to `sphinx-test-reports` test-case nodes via a `cr_link()` dynamic function
-- Support sphinx-needs >= 1.0.1 through 8.0.0+ with a compatibility shim
+- Support sphinx-needs >= 6.0.0 through 8.0.0+ with a compatibility shim
 - Emit configurable Sphinx warnings (via `sphinx.logging`) when coverage data is missing
 
 ---
@@ -233,10 +233,15 @@ cr_json_mapping = {
             "branch_rate":      (["summary", "percent_branches_covered"], "0"),
             "lines_valid":      (["summary", "num_statements"],  "0"),
             "lines_covered":    (["summary", "covered_lines"],   "0"),
+            # only present in summary when coverage run with branch=True; default 0 when absent
+            "branches_valid":   (["summary", "num_branches"],    0),
+            "branches_covered": (["summary", "covered_branches"], 0),
             "missed_lines":     (["missing_lines"], []),
+            # complexity is intentionally absent: Cobertura-only concept, not in coverage.py JSON
         },
         "function": {
-            "name":             (["name"],       "unknown"),
+            # name populated from the functions dict key by the parser, same as module.name
+            "name":             ([], "unknown"),
             "line_start":       (["start_line"], 0),
             # derived: len(executed_lines); no scalar hit counter in coverage.py JSON
             "hits":             ([], 0),
@@ -272,18 +277,23 @@ cr_extra_options = ["my_field"]
 
 ## sphinx-needs Compatibility Shim
 
-Two breaking changes are handled via an import-detection shim in `coverage_report.py`:
+Two breaking changes are handled via a version-detection shim in `coverage_report.py`.
+
+**Minimum supported version: sphinx-needs >= 6.0.0** (matches the nox test matrix).
 
 | sphinx-needs version | Change |
 |---------------------|--------|
-| < 8.0.0 | `add_extra_option(app, name)` — no schema support |
-| >= 8.0.0 | `add_field(name, description, *, schema=...)` — `app` removed, `description` positional, schema required |
+| 6.0.0 – 7.x | `add_extra_option(app, name, schema=...)` — `app` required, `schema=` accepted |
+| >= 8.0.0 | `add_field(name, description, *, schema=...)` — `app` removed, `description` positional |
 | >= 8.0.0 | `needs_extra_options` in `conf.py` deprecated → use `needs_fields` dict |
 
-The shim uses `try/except ImportError` (not version-number comparison) to detect which API is present, matching the proven pattern in `sphinx-test-reports`:
+The shim uses `try/except ImportError` to detect which API is present, plus a `use_schema` version gate so `schema=` is only passed to `add_extra_option` on 6.x+, matching the proven pattern in `sphinx-test-reports`:
 
 ```python
 # _register_field shim in coverage_report.py
+import sphinx_needs
+from packaging.version import Version
+
 try:
     from sphinx_needs.api import add_field as _add_field
     # sphinx-needs >= 8.0.0: add_field(name, description, *, schema)
@@ -291,31 +301,36 @@ try:
         _add_field(name, name, schema=schema or {"type": "string"})
 except ImportError:
     from sphinx_needs.api import add_extra_option as _add_extra_option
-    # sphinx-needs < 8.0.0: add_extra_option(app, name[, schema=])
+    # sphinx-needs 6.x – 7.x: add_extra_option(app, name, schema=)
     def _register_field(app, name, schema=None):
         _add_extra_option(app, name, **({} if schema is None else {"schema": schema}))
 ```
 
-`_register_field` is called unconditionally for all coverage fields — no version-number branch needed in `sphinx_needs_update()`:
+In `sphinx_needs_update()`, a `use_schema` gate ensures `schema=` is only passed when the installed version supports it, and omitted for any pre-6.0 install:
 
 ```python
 def sphinx_needs_update(app, config):
-    _register_field(app, "line_rate",         schema={"type": "number"})
-    _register_field(app, "branch_rate",       schema={"type": "number"})
-    _register_field(app, "lines_valid",       schema={"type": "integer"})
-    _register_field(app, "lines_covered",     schema={"type": "integer"})
-    _register_field(app, "branches_valid",    schema={"type": "integer"})
-    _register_field(app, "branches_covered",  schema={"type": "integer"})
-    _register_field(app, "missed_lines",      schema={"type": "string"})
-    _register_field(app, "filename",          schema={"type": "string"})
-    _register_field(app, "package",           schema={"type": "string"})
-    _register_field(app, "complexity",        schema={"type": "number"})
-    _register_field(app, "hits",              schema={"type": "integer"})
-    _register_field(app, "line_start",        schema={"type": "integer"})
-    # ... extra options from cr_extra_options
-```
+    needs_version = Version(sphinx_needs.__version__)
+    use_schema = needs_version >= Version("6.0.0")
 
-The `schema=` kwarg is accepted and forwarded by `add_extra_option` on versions that support it; on versions that do not, the shim omits it via `**({} if schema is None else {"schema": schema})`.
+    if use_schema:
+        _register_field(app, "line_rate",        schema={"type": "number"})
+        _register_field(app, "branch_rate",      schema={"type": "number"})
+        _register_field(app, "lines_valid",      schema={"type": "integer"})
+        _register_field(app, "lines_covered",    schema={"type": "integer"})
+        _register_field(app, "branches_valid",   schema={"type": "integer"})
+        _register_field(app, "branches_covered", schema={"type": "integer"})
+        _register_field(app, "missed_lines",     schema={"type": "string"})
+        _register_field(app, "filename",         schema={"type": "string"})
+        _register_field(app, "package",          schema={"type": "string"})
+        _register_field(app, "complexity",       schema={"type": "number"})
+        _register_field(app, "hits",             schema={"type": "integer"})
+        _register_field(app, "line_start",       schema={"type": "integer"})
+    else:
+        _register_field(app, "line_rate")
+        _register_field(app, "branch_rate")
+        # ... same fields without schema=
+```
 
 ---
 
@@ -409,7 +424,7 @@ filename, package, complexity, hits, line_start
 | Package | Reason |
 |---------|--------|
 | `sphinx > 4.0` | Extension framework |
-| `sphinx-needs >= 1.0.1` | Need object creation and management |
+| `sphinx-needs >= 6.0.0` | Need object creation and management |
 | `lxml` | Cobertura XML parsing and XSD validation |
 | `packaging` | Version comparison for sphinx-needs compatibility shim |
 
