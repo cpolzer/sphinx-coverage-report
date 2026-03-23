@@ -13,5 +13,5 @@ def install_styles_static_files(app):
         return
     try:
         app.add_css_file("coverage_report_common.css")
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.debug("coverage-report: could not register CSS file: %s", exc)

@@ -13,7 +13,7 @@ try:
     from sphinx_needs.api import add_field as _add_field
 
     def _register_field(app, name, schema=None):
-        _add_field(name, name, schema=schema)
+        _add_field(name, name, schema=schema)  # name used as description placeholder
 except ImportError:
     from sphinx_needs.api import add_extra_option as _add_extra_option
 
