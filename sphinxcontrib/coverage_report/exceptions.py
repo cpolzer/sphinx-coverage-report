@@ -1,14 +1,17 @@
+"""Custom exceptions for sphinx-coverage-report."""
+
+
 class CoverageReportError(Exception):
-    pass
+    """Base class for all sphinx-coverage-report errors."""
 
 
 class CoverageReportFileNotFound(CoverageReportError):
-    pass
+    """Raised when a referenced coverage file does not exist."""
 
 
 class CoverageReportFileInvalid(CoverageReportError):
-    pass
+    """Raised when a coverage file cannot be parsed."""
 
 
 class CoverageReportInvalidOption(CoverageReportError):
-    pass
+    """Raised when a directive option has an invalid value."""

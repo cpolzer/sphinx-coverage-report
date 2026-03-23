@@ -1,7 +1,7 @@
-import os
+import pathlib
 import pytest
 
 
 @pytest.fixture
-def fixture_dir():
-    return os.path.join(os.path.dirname(__file__), "fixtures")
+def fixture_dir() -> pathlib.Path:
+    return pathlib.Path(__file__).parent / "fixtures"
