@@ -19,6 +19,7 @@
 - Compute pass/fail status against configurable thresholds
 - Enable cross-linking from coverage nodes to `sphinx-test-reports` test-case nodes via a `cr_link()` dynamic function
 - Support sphinx-needs >= 1.0.1 through 8.0.0+ with a compatibility shim
+- Emit configurable Sphinx warnings (via `sphinx.logging`) when coverage data is missing
 
 ---
 
@@ -63,7 +64,7 @@ sphinxcontrib/coverage_report/
 | Format | Parser | Notes |
 |--------|--------|-------|
 | Cobertura XML (`coverage.xml`) | `CoberturaParser` | Primary format; lxml + optional XSD validation |
-| lcov (`lcov.info`) | `LcovParser` | Pure Python; parses `DA:`, `FN:`, `FNDA:`, `BRH:` records |
+| lcov (`lcov.info`) | `LcovParser` | Pure Python; parses `DA:`, `FN:`, `FNDA:`, `BRDA:`, `BRF:`, `BRH:` records. `BRDA:` provides per-branch detail; `BRF:`/`BRH:` provide summary branch totals. |
 | JSON (`coverage.json`) | `JsonParser` | Driven by `cr_json_mapping` config; same pattern as `tr_json_mapping` |
 
 Function/method-level data is populated by JSON and lcov only — Cobertura does not carry it reliably.
@@ -95,6 +96,8 @@ All parsers produce the same shape so directives are format-agnostic. Results ar
     "branch_rate": float,
     "lines_valid": int,
     "lines_covered": int,
+    "branches_valid": int,
+    "branches_covered": int,
     "modules": [<module>, ...]
 }
 
@@ -106,6 +109,8 @@ All parsers produce the same shape so directives are format-agnostic. Results ar
     "branch_rate": float,
     "lines_valid": int,
     "lines_covered": int,
+    "branches_valid": int,
+    "branches_covered": int,
     "missed_lines": [int, ...],
     "complexity": float,
     "functions": [<function>, ...]
@@ -170,7 +175,7 @@ Status is computed at directive run time by comparing `line_rate` and `branch_ra
 ```python
 cr_rootdir = "."
 cr_import_encoding = "utf-8"
-cr_extra_options = []                   # user-defined passthrough fields
+cr_extra_options = []                   # user-defined passthrough fields; rebuild scope "env"
 
 # Need type config: [directive-name, need-type, title-prefix, id-prefix, color, style]
 cr_report   = ["coverage-report",   "coveragereport",   "Coverage Report",   "CR_", "#4a90d9", "node"]
@@ -191,11 +196,51 @@ cr_threshold_module  = {"line_rate": 0.90, "branch_rate": 0.80}
 cr_module_id_length   = 5
 cr_package_id_length  = 3
 
-# JSON format mapping (mirrors tr_json_mapping)
-cr_json_mapping = {...}
+# JSON format mapping (mirrors tr_json_mapping structure)
+# Each field: (key_path_list, default_value)
+cr_json_mapping = {
+    "json_config": {
+        "report": {
+            "line_rate":        (["line_rate"],        "0"),
+            "branch_rate":      (["branch_rate"],      "0"),
+            "lines_valid":      (["summary", "num_statements"], "0"),
+            "lines_covered":    (["summary", "covered_lines"],  "0"),
+            "branches_valid":   (["summary", "num_branches"],   "0"),
+            "branches_covered": (["summary", "covered_branches"], "0"),
+            "timestamp":        (["meta", "timestamp"], "unknown"),
+            "version":          (["meta", "version"],   "unknown"),
+        },
+        "package": {
+            "name":             (["name"], "unknown"),
+            "line_rate":        (["line_rate"], "0"),
+            "branch_rate":      (["branch_rate"], "0"),
+        },
+        "module": {
+            "name":             (["name"], "unknown"),
+            "filename":         (["filename"], "unknown"),
+            "line_rate":        (["summary", "percent_covered_display"], "0"),
+            "branch_rate":      (["summary", "percent_branches_complete"], "0"),
+            "lines_valid":      (["summary", "num_statements"], "0"),
+            "lines_covered":    (["summary", "covered_lines"], "0"),
+            "missing_lines":    (["missing_lines"], []),
+        },
+        "function": {
+            "name":             (["name"], "unknown"),
+            "line_start":       (["start_line"], 0),
+            "hits":             (["executed"], 0),
+        },
+    }
+}
 
-# Custom RST report template path
-cr_report_template = None
+# Custom RST report template path.
+# Defaults to the bundled coverage_report_template.txt inside the package.
+# Set to an absolute path to use a custom template.
+cr_report_template = None  # None → bundled default
+
+# Emit a Sphinx warning (via sphinx.logging) when a directive references a
+# coverage file that contains no data for the requested package/module/function.
+# Set to False to silence these warnings.
+cr_warn_no_data = True
 ```
 
 ### User-defined extra options — version-aware pattern
@@ -215,38 +260,50 @@ cr_extra_options = ["my_field"]
 
 ## sphinx-needs Compatibility Shim
 
-Two breaking changes are handled via a version-detection shim in `coverage_report.py`:
+Two breaking changes are handled via an import-detection shim in `coverage_report.py`:
 
 | sphinx-needs version | Change |
 |---------------------|--------|
-| >= 6.0.0 | `add_extra_option()` → `add_field()` with `schema=` parameter |
+| < 8.0.0 | `add_extra_option(app, name)` — no schema support |
+| >= 8.0.0 | `add_field(name, description, *, schema=...)` — `app` removed, `description` positional, schema required |
 | >= 8.0.0 | `needs_extra_options` in `conf.py` deprecated → use `needs_fields` dict |
+
+The shim uses `try/except ImportError` (not version-number comparison) to detect which API is present, matching the proven pattern in `sphinx-test-reports`:
 
 ```python
 # _register_field shim in coverage_report.py
-import sphinx_needs
-from packaging.version import Version
-
 try:
     from sphinx_needs.api import add_field as _add_field
+    # sphinx-needs >= 8.0.0: add_field(name, description, *, schema)
     def _register_field(app, name, schema=None):
-        _add_field(app, name, schema=schema or {"type": "string"})
+        _add_field(name, name, schema=schema or {"type": "string"})
 except ImportError:
     from sphinx_needs.api import add_extra_option as _add_extra_option
+    # sphinx-needs < 8.0.0: add_extra_option(app, name[, schema=])
     def _register_field(app, name, schema=None):
         _add_extra_option(app, name, **({} if schema is None else {"schema": schema}))
-
-# In sphinx_needs_update():
-use_schema = Version(sphinx_needs.__version__) >= Version("6.0.0")
-if use_schema:
-    _register_field(app, "line_rate",   schema={"type": "number"})
-    _register_field(app, "branch_rate", schema={"type": "number"})
-    # ... all coverage fields with schema
-else:
-    _register_field(app, "line_rate")
-    _register_field(app, "branch_rate")
-    # ... all coverage fields without schema
 ```
+
+`_register_field` is called unconditionally for all coverage fields — no version-number branch needed in `sphinx_needs_update()`:
+
+```python
+def sphinx_needs_update(app, config):
+    _register_field(app, "line_rate",         schema={"type": "number"})
+    _register_field(app, "branch_rate",       schema={"type": "number"})
+    _register_field(app, "lines_valid",       schema={"type": "integer"})
+    _register_field(app, "lines_covered",     schema={"type": "integer"})
+    _register_field(app, "branches_valid",    schema={"type": "integer"})
+    _register_field(app, "branches_covered",  schema={"type": "integer"})
+    _register_field(app, "missed_lines",      schema={"type": "string"})
+    _register_field(app, "filename",          schema={"type": "string"})
+    _register_field(app, "package",           schema={"type": "string"})
+    _register_field(app, "complexity",        schema={"type": "number"})
+    _register_field(app, "hits",              schema={"type": "integer"})
+    _register_field(app, "line_start",        schema={"type": "integer"})
+    # ... extra options from cr_extra_options
+```
+
+The `schema=` kwarg is safely ignored by the `add_extra_option` fallback on older versions that don't support it.
 
 ---
 
@@ -280,6 +337,26 @@ Requirement (sphinx-needs)
             └── Coverage Module (sphinx-coverage-report)
                     └── Coverage Function
 ```
+
+---
+
+## Missing Data Warnings
+
+When a directive references a coverage file but the requested package, module, or function is not found in the parsed data, the extension emits a Sphinx warning using `sphinx.logging`:
+
+```python
+import sphinx.util.logging
+logger = sphinx.util.logging.getLogger(__name__)
+
+if data_missing and app.config.cr_warn_no_data:
+    logger.warning(
+        "sphinx-coverage-report: no coverage data found for '%s' in '%s'",
+        identifier, filepath,
+        location=self.get_location(),
+    )
+```
+
+`cr_warn_no_data = True` (default) — set to `False` in `conf.py` to silence these warnings globally.
 
 ---
 
