@@ -1,0 +1,31 @@
+[build-system]
+requires = ["flit_core>=3.2"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "sphinx-coverage-report"
+version = "0.1.0"
+description = "Sphinx extension for showing code coverage results"
+readme = "README.rst"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = [
+    "sphinx>4.0",
+    "lxml",
+    "sphinx-needs>=6.0.0",
+    "packaging",
+]
+
+[project.optional-dependencies]
+test = [
+    "nox>=2025.2.9",
+    "pytest>=7.0",
+    "pytest-cov",
+    "pytest-xdist",
+]
+
+[tool.flit.module]
+name = "sphinxcontrib.coverage_report"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
