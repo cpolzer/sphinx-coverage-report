@@ -198,36 +198,48 @@ cr_package_id_length  = 3
 
 # JSON format mapping (mirrors tr_json_mapping structure)
 # Each field: (key_path_list, default_value)
+# Paths reflect actual coverage.py JSON output structure (coverage >= 5.0).
+#
+# Notes on derived fields:
+#   - report.line_rate / branch_rate: not present directly in coverage.py JSON;
+#     the JsonParser computes them from totals.covered_lines / totals.num_statements
+#     and totals.covered_branches / totals.num_branches. These keys are reserved
+#     in the mapping but populated programmatically rather than by key-path lookup.
+#   - module.name / module.filename: coverage.py JSON stores file data as
+#     `files[<filename>]` where the filename IS the dict key. The JsonParser
+#     populates name/filename from the dict key, not from a path inside the value.
+#   - function.hits: derived from len(region["executed_lines"]) or
+#     region["summary"]["covered_lines"]; no scalar hit counter exists in JSON.
 cr_json_mapping = {
     "json_config": {
         "report": {
-            "line_rate":        (["line_rate"],        "0"),
-            "branch_rate":      (["branch_rate"],      "0"),
-            "lines_valid":      (["summary", "num_statements"], "0"),
-            "lines_covered":    (["summary", "covered_lines"],  "0"),
-            "branches_valid":   (["summary", "num_branches"],   "0"),
-            "branches_covered": (["summary", "covered_branches"], "0"),
+            # derived: covered_lines / num_statements
+            "line_rate":        ([], "0"),
+            # derived: covered_branches / num_branches
+            "branch_rate":      ([], "0"),
+            "lines_valid":      (["totals", "num_statements"],   "0"),
+            "lines_covered":    (["totals", "covered_lines"],    "0"),
+            "branches_valid":   (["totals", "num_branches"],     "0"),
+            "branches_covered": (["totals", "covered_branches"], "0"),
             "timestamp":        (["meta", "timestamp"], "unknown"),
             "version":          (["meta", "version"],   "unknown"),
         },
-        "package": {
-            "name":             (["name"], "unknown"),
-            "line_rate":        (["line_rate"], "0"),
-            "branch_rate":      (["branch_rate"], "0"),
-        },
         "module": {
-            "name":             (["name"], "unknown"),
-            "filename":         (["filename"], "unknown"),
-            "line_rate":        (["summary", "percent_covered_display"], "0"),
-            "branch_rate":      (["summary", "percent_branches_complete"], "0"),
-            "lines_valid":      (["summary", "num_statements"], "0"),
-            "lines_covered":    (["summary", "covered_lines"], "0"),
-            "missing_lines":    (["missing_lines"], []),
+            # name and filename populated from the files dict key by the parser
+            "name":             ([], "unknown"),
+            "filename":         ([], "unknown"),
+            # percent_covered is a float (0–100); parser divides by 100 → 0.0–1.0
+            "line_rate":        (["summary", "percent_covered"],          "0"),
+            "branch_rate":      (["summary", "percent_branches_covered"], "0"),
+            "lines_valid":      (["summary", "num_statements"],  "0"),
+            "lines_covered":    (["summary", "covered_lines"],   "0"),
+            "missed_lines":     (["missing_lines"], []),
         },
         "function": {
-            "name":             (["name"], "unknown"),
+            "name":             (["name"],       "unknown"),
             "line_start":       (["start_line"], 0),
-            "hits":             (["executed"], 0),
+            # derived: len(executed_lines); no scalar hit counter in coverage.py JSON
+            "hits":             ([], 0),
         },
     }
 }
@@ -303,7 +315,7 @@ def sphinx_needs_update(app, config):
     # ... extra options from cr_extra_options
 ```
 
-The `schema=` kwarg is safely ignored by the `add_extra_option` fallback on older versions that don't support it.
+The `schema=` kwarg is accepted and forwarded by `add_extra_option` on versions that support it; on versions that do not, the shim omits it via `**({} if schema is None else {"schema": schema})`.
 
 ---
 
@@ -342,21 +354,43 @@ Requirement (sphinx-needs)
 
 ## Missing Data Warnings
 
-When a directive references a coverage file but the requested package, module, or function is not found in the parsed data, the extension emits a Sphinx warning using `sphinx.logging`:
+`cr_warn_no_data = True` (default) enables Sphinx warnings via `sphinx.util.logging` for all three cases where coverage data is absent:
+
+| Scenario | Warning emitted? |
+|----------|-----------------|
+| Coverage file path does not exist or cannot be opened | Yes — before any parsing |
+| File parses successfully but contains zero packages/modules (empty report) | Yes — file-level warning |
+| File has data but the requested package / module / function is not found | Yes — directive-level warning |
+
+This means simply adding `sphinxcontrib.coverage_report` to `extensions` and referencing a missing or empty file is enough to surface a warning — no data needs to be partially present.
 
 ```python
-import sphinx.util.logging
-logger = sphinx.util.logging.getLogger(__name__)
+from sphinx.util import logging
+logger = logging.getLogger(__name__)
 
-if data_missing and app.config.cr_warn_no_data:
+# File not found
+if not os.path.exists(filepath) and config.cr_warn_no_data:
+    logger.warning(
+        "sphinx-coverage-report: coverage file not found: '%s'",
+        filepath, location=self.get_location(),
+    )
+
+# File empty / no packages parsed
+if not parsed_data["packages"] and config.cr_warn_no_data:
+    logger.warning(
+        "sphinx-coverage-report: no coverage data in '%s'",
+        filepath, location=self.get_location(),
+    )
+
+# Specific identifier not found
+if identifier_missing and config.cr_warn_no_data:
     logger.warning(
         "sphinx-coverage-report: no coverage data found for '%s' in '%s'",
-        identifier, filepath,
-        location=self.get_location(),
+        identifier, filepath, location=self.get_location(),
     )
 ```
 
-`cr_warn_no_data = True` (default) — set to `False` in `conf.py` to silence these warnings globally.
+Set `cr_warn_no_data = False` in `conf.py` to silence all of these globally.
 
 ---
 
