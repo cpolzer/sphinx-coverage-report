@@ -23,6 +23,12 @@ test = [
     "pytest-cov",
     "pytest-xdist",
 ]
+docs = [
+    "sphinx",
+    "furo",
+    "sphinx-needs>=6.0.0",
+    "pytest-cov",
+]
 
 [tool.flit.module]
 name = "sphinxcontrib.coverage_report"

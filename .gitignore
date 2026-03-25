@@ -7,3 +7,5 @@ build/
 .nox/
 .pytest_cache/
 *.egg
+docs/_coverage/
+docs/_build/
