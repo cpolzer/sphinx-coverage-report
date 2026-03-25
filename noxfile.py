@@ -25,3 +25,15 @@ def coverage(session):
         "pytest", "tests/", "--cov=sphinxcontrib/coverage_report",
         "--cov-report=xml", "--cov-report=term-missing",
     )
+
+
+@nox.session
+def docs(session):
+    session.install("-e", ".[docs,test]")
+    session.run(
+        "pytest",
+        "--cov=sphinxcontrib/coverage_report",
+        "--cov-report=xml:docs/_coverage/coverage.xml",
+        "-q",
+    )
+    session.run("sphinx-build", "-W", "docs", "docs/_build/html")
