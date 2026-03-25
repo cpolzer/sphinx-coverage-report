@@ -1,17 +1,17 @@
 # sphinxcontrib/coverage_report/directives/coverage_common.py
 import os
-from docutils.parsers.rst import Directive
 from sphinx.util import logging
+from sphinx.util.docutils import SphinxDirective
 
 logger = logging.getLogger(__name__)
 
 
-def _load_coverage_file(filepath, app):
-    """Parse a coverage file and cache result in app.coveragereport_data."""
-    if not hasattr(app, "coveragereport_data"):
-        app.coveragereport_data = {}
-    if filepath in app.coveragereport_data:
-        return app.coveragereport_data[filepath]
+def _load_coverage_file(filepath, env):
+    """Parse a coverage file and cache result in env.coveragereport_data."""
+    if not hasattr(env, "coveragereport_data"):
+        env.coveragereport_data = {}
+    if filepath in env.coveragereport_data:
+        return env.coveragereport_data[filepath]
 
     if not os.path.exists(filepath):
         return None
@@ -29,22 +29,22 @@ def _load_coverage_file(filepath, app):
     else:
         return None
 
-    app.coveragereport_data[filepath] = data
+    env.coveragereport_data[filepath] = data
     return data
 
 
-class CoverageCommonDirective(Directive):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.env = self.state.document.settings.env
-        self.app = self.env.app
-
+class CoverageCommonDirective(SphinxDirective):
     def _resolve_path(self, raw_path):
-        rootdir = self.app.config.cr_rootdir
+        rootdir = self.config.cr_rootdir
         return os.path.join(rootdir, raw_path) if not os.path.isabs(raw_path) else raw_path
 
     def _warn_if_no_data(self, filepath, data, identifier=None):
-        if not self.app.config.cr_warn_no_data:
+        """Emit Sphinx build-time warnings via sphinx.util.logging when coverage data is absent.
+
+        This does NOT produce warning nodes in the document — call this before returning
+        a warning node from run() so both the build log and the rendered doc signal the problem.
+        """
+        if not self.config.cr_warn_no_data:
             return
         if not os.path.exists(filepath):
             logger.warning(

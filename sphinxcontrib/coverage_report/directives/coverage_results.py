@@ -16,13 +16,14 @@ class CoverageResultsDirective(CoverageCommonDirective):
     """
     required_arguments = 1
     optional_arguments = 0
+    has_content = False
     option_spec = {
         "package": directives.unchanged,
     }
 
     def run(self):
         filepath = self._resolve_path(self.arguments[0])
-        data = _load_coverage_file(filepath, self.app)
+        data = _load_coverage_file(filepath, self.env)
 
         if data is None or not data.get("packages"):
             self._warn_if_no_data(filepath, data)
@@ -64,7 +65,7 @@ class CoverageResultsDirective(CoverageCommonDirective):
                 mod["filename"],
                 f"{mod['line_rate']:.0%}",
                 f"{mod['branch_rate']:.0%}" if mod["branches_valid"] else "n/a",
-                ", ".join(str(l) for l in mod["missed_lines"]) or "—",
+                ", ".join(str(ln) for ln in mod["missed_lines"]) or "—",
             ]:
                 entry = nodes.entry()
                 entry += nodes.paragraph(text=val)
