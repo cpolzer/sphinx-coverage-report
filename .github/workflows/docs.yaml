@@ -33,6 +33,18 @@ jobs:
         if: github.event.action == 'closed'
         run: mkdir -p docs/_build/html
 
+      - name: Ensure .nojekyll on gh-pages root
+        if: github.event.action != 'closed'
+        run: mkdir -p /tmp/nojekyll && touch /tmp/nojekyll/.nojekyll
+
+      - name: Push .nojekyll
+        if: github.event.action != 'closed'
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: /tmp/nojekyll
+          clean: false
+
       - uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: docs/_build/html
@@ -96,6 +108,7 @@ jobs:
             pr-preview/
             dev/
             v*/
+            .nojekyll
 
       - name: Deploy to versioned path
         uses: JamesIves/github-pages-deploy-action@v4
