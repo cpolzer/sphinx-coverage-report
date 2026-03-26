@@ -32,6 +32,7 @@ def docs(session):
     session.install("-e", ".[docs,test]")
     session.run(
         "pytest",
+        "tests/",
         "--cov=sphinxcontrib/coverage_report",
         "--cov-report=xml:docs/_coverage/coverage.xml",
         "-q",

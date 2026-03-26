@@ -1,6 +1,9 @@
 # docs/conf.py
+import os
+from pathlib import Path
+
 project = "sphinx-coverage-report"
-author = "~chrstian polzer"
+author = "~christian polzer"
 release = "0.1.0"
 
 extensions = [
@@ -10,4 +13,5 @@ extensions = [
 
 html_theme = "furo"
 needs_id_regex = ".*"
+cr_rootdir = Path(__file__).parent
 cr_warn_no_data = True

@@ -81,3 +81,15 @@ Warnings
    cr_warn_no_data = True
 
 Emit Sphinx warnings when a directive references missing coverage data.
+
+Report template
+---------------
+
+.. code-block:: python
+
+   cr_report_template = None  # default: bundled template
+
+Path to a custom RST template file for the ``coverage-report`` directive.
+When ``None``, the bundled ``coverage_report_template.txt`` is used.
+The template supports these placeholders: ``{title}``, ``{title_underline}``,
+``{file}``, ``{id}``, ``{tags}``, ``{module_need}``, ``{package_need}``.
