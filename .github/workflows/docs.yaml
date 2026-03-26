@@ -29,6 +29,10 @@ jobs:
         env:
           DOCS_VERSION: pr-${{ github.event.pull_request.number }}
 
+      - name: Create source dir placeholder (teardown only)
+        if: github.event.action == 'closed'
+        run: mkdir -p docs/_build/html
+
       - uses: rossjrw/pr-preview-action@v1
         with:
           source-dir: docs/_build/html
