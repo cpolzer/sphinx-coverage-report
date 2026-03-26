@@ -130,13 +130,12 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Set short SHA
-        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
-
       - name: Build docs
-        run: pip install nox && nox -s docs
-        env:
-          DOCS_VERSION: dev+${{ env.SHORT_SHA }}
+        # DOCS_VERSION is set inline so bash evaluates ${GITHUB_SHA::7} at
+        # runtime — avoids the env-context evaluation order issue with ${{ env.* }}
+        run: |
+          pip install nox
+          DOCS_VERSION="dev+${GITHUB_SHA::7}" nox -s docs
 
       - uses: JamesIves/github-pages-deploy-action@v4
         with:
