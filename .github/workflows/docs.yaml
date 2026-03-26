@@ -1,0 +1,105 @@
+name: Docs
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  push:
+    branches: [main]
+    tags:
+      - "v*"
+
+jobs:
+  # ── PR preview ────────────────────────────────────────────────────────────
+  docs-preview:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Build docs
+        if: github.event.action != 'closed'
+        run: pip install nox && nox -s docs
+        env:
+          DOCS_VERSION: pr-${{ github.event.pull_request.number }}
+
+      - uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: docs/_build/html
+          preview-branch: gh-pages
+          umbrella-dir: pr-preview
+
+  # ── Dev (main) ────────────────────────────────────────────────────────────
+  docs-dev:
+    if: github.event_name == 'push' && github.ref_type == 'branch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set short SHA
+        run: echo "SHORT_SHA=${GITHUB_SHA::7}" >> $GITHUB_ENV
+
+      - name: Build docs
+        run: pip install nox && nox -s docs
+        env:
+          DOCS_VERSION: dev+${{ env.SHORT_SHA }}
+
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: docs/_build/html
+          target-folder: dev
+          clean: true
+
+  # ── Release (tag) ─────────────────────────────────────────────────────────
+  docs-release:
+    if: github.event_name == 'push' && github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Extract version from tag
+        # strips leading 'v': v1.2.0 → 1.2.0
+        run: echo "DOCS_VERSION=${GITHUB_REF_NAME#v}" >> $GITHUB_ENV
+
+      - name: Build docs
+        run: pip install nox && nox -s docs
+        env:
+          DOCS_VERSION: ${{ env.DOCS_VERSION }}
+
+      - name: Deploy to root (latest)
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: docs/_build/html
+          clean: true
+          clean-exclude: |
+            pr-preview/
+            dev/
+            v*/
+
+      - name: Deploy to versioned path
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: docs/_build/html
+          target-folder: v${{ env.DOCS_VERSION }}
+          clean: true
