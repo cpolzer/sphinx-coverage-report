@@ -13,6 +13,7 @@ requirements and test-case nodes in a Sphinx documentation site.
 ```
 sphinxcontrib/coverage_report/
 ├── coverage_report.py               — setup(), config values, Sphinx event wiring
+├── __init__.py                      — package entry point; re-exports setup()
 ├── config.py                        — config dataclass helpers
 ├── environment.py                   — CSS static-file injection
 ├── exceptions.py                    — CoverageReportFileNotFound, CoverageReportFileInvalid
@@ -41,6 +42,7 @@ Parser (CoberturaParser / JsonParser / LcovParser)
     │  { line_rate, branch_rate, packages: [ { name, modules: [...] } ] }
     ▼
 CoverageCommonDirective._resolve_path() + _load_coverage_file()
+    │  (_resolve_path is an instance method; _load_coverage_file is a module-level function)
     │  resolves path relative to cr_rootdir, caches result on env.coveragereport_data
     ▼
 Directive.run()
@@ -62,8 +64,9 @@ sphinx-needs setup in one place:
   via `add_field` (sphinx-needs ≥ 6) or `add_extra_option` (older). A
   compatibility shim in `coverage_report.py` selects the right call at runtime.
 - **Need types** (`coveragereport`, `coveragepackage`, `coveragemodule`,
-  `coveragefunction`) are registered via `add_need_type()` using the list-form
-  config values `cr_report`, `cr_package`, `cr_module`, `cr_function`.
+  `coveragefunction`) are registered via `add_need_type()` by unpacking
+  `config.cr_<level>[1:]` — the first element of each list is the RST
+  directive name and is not passed to `add_need_type`.
 - **IDs** are auto-generated using `_make_hashed_id()`. The import path changed
   in sphinx-needs v4; the shim in `coverage_common.py` handles both.
 - **`cr_link()`** is registered as a dynamic function via `add_dynamic_function()`
@@ -110,7 +113,9 @@ sphinx-needs setup in one place:
                        "branches_covered": int,
                        "missed_lines": list[int],
                        "complexity": float,
-                       "functions": list[dict],  # {"name", "line_start", "hits"}
+                       "functions": list[dict],  # each dict: {"name": str, "line_start": int, "hits": int}
+                                                 # note: Cobertura XML does not carry function-level data;
+                                                 # CoberturaParser always returns [] here
                    }
                ],
            }
@@ -126,7 +131,9 @@ sphinx-needs setup in one place:
 1. Create `sphinxcontrib/coverage_report/directives/<name>.py`.
 2. Subclass `CoverageCommonDirective` (provides `_resolve_path`,
    `_warn_if_no_data`, and `get_location`).
-3. Implement `run()` — resolve the path, load data, call `add_need()`.
+3. Implement `run()` — resolve the path, load data. Call `add_need()` if the
+   directive creates a sphinx-needs node; build docutils nodes directly if it
+   renders a standalone table (like `CoverageResultsDirective`).
 4. Register in `coverage_report.py::_register_directives()` (not at module
    level — avoids circular imports at extension load time).
 5. Add a config value in `setup()` if the directive needs configurable
