@@ -126,6 +126,18 @@ Running `nox -s docs` will:
 2. Run the test suite and emit `docs/_coverage/coverage.xml`
 3. Build the Sphinx site to `docs/_build/html`
 
+### Docs build as end-to-end test
+
+The `nox -s docs` session doubles as an **end-to-end integration test**. A successful build verifies:
+
+- The extension loads and registers all directives without errors
+- `coverage-report` parses the real `coverage.xml` generated from the test suite
+- All need directives (`coverage-module`, `coverage-package`, etc.) create valid sphinx-needs nodes
+- The `needtable` in the template resolves correctly against those nodes
+- The furo theme renders without conflicts
+
+The nox session passes `sphinx-build -W` (warnings-as-errors) so any broken directive, missing data, or malformed node fails the build. This is added to the CI matrix alongside the unit test sessions.
+
 ---
 
 ## Dependencies
