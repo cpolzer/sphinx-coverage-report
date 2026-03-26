@@ -150,5 +150,12 @@ def _register_directives(app: Sphinx) -> None:
     """Register all coverage directives with Sphinx. Called on builder-inited."""
     # Directives are imported here to avoid circular imports at module load time.
     from sphinxcontrib.coverage_report.directives.coverage_results import CoverageResultsDirective
+    from sphinxcontrib.coverage_report.directives.coverage_module import CoverageModuleDirective
+    from sphinxcontrib.coverage_report.directives.coverage_package import CoveragePackageDirective
+    from sphinxcontrib.coverage_report.directives.coverage_function import CoverageFunctionDirective
+    from sphinxcontrib.coverage_report.directives.coverage_report_directive import CoverageReportDirective
     app.add_directive("coverage-results", CoverageResultsDirective)
-    # coverage-module, coverage-package, coverage-function, coverage-report added in Tasks 9 & 10
+    app.add_directive(app.config.cr_module[0], CoverageModuleDirective)
+    app.add_directive(app.config.cr_package[0], CoveragePackageDirective)
+    app.add_directive(app.config.cr_function[0], CoverageFunctionDirective)
+    app.add_directive(app.config.cr_report[0], CoverageReportDirective)

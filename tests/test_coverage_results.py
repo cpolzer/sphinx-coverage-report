@@ -22,3 +22,12 @@ def test_build_succeeds(build_app):
 def test_line_rate_shown(build_app):
     html = (build_app / "index.html").read_text()
     assert "92%" in html or "80%" in html  # at least one module rate
+
+
+def test_coverage_report_directive_builds(tmp_path):
+    src = os.path.join(os.path.dirname(__file__), "doc_test", "full_report")
+    out = str(tmp_path / "output")
+    app = Sphinx(src, src, out, out, "html")
+    app.build()
+    html = (tmp_path / "output" / "index.html").read_text()
+    assert "Test Coverage Report" in html

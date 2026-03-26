@@ -1,0 +1,9 @@
+{title}
+{title_underline}
+
+.. coverage-results:: {file}
+
+.. needtable::
+   :filter: type == '{module_need}' and '{id}' in tags
+   :columns: id, title, status, line_rate, branch_rate
+   :style: table
