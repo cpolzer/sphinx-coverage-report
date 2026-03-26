@@ -4,7 +4,7 @@ from pathlib import Path
 
 project = "sphinx-coverage-report"
 author = "~christian polzer"
-release = "0.1.0"
+version = release = os.environ.get("DOCS_VERSION", "local")
 
 extensions = [
     "sphinx_needs",
