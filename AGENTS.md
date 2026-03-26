@@ -32,13 +32,17 @@ nox -s docs
 
 - **`SphinxDirective` does not expose `self.app`** — use `self.env.app` in all
   directive `run()` methods.
-- **`_make_hashed_id` import path changed in sphinx-needs v4** — the shim in
-  `coverage_common.py` handles both; do not import it directly.
+- **`_make_hashed_id` import path changed in sphinx-needs v4** — each need-directive file
+  (`coverage_module.py`, `coverage_package.py`, `coverage_function.py`) carries its own
+  try/except shim at module level. Copy the shim pattern from one of those files if you
+  add a new need directive; do not import `_make_hashed_id` directly.
 - **`coverage.xml` package names are short** (`.`, `directives`, `functions`),
   not dotted Python names like `sphinxcontrib.coverage_report`. Do not assume
   dotted names when filtering by package.
-- **`cr_rootdir` must be a `pathlib.Path`**, not a `str` — `docs/conf.py` uses
-  `Path(__file__).parent`; a `str` triggers a Sphinx type warning.
+- **`cr_rootdir` should be a `pathlib.Path` when set in `conf.py`** — the
+  default (`app.confdir`) is a `str` and works fine at runtime, but if you
+  set `cr_rootdir` explicitly, use `Path(__file__).parent` (as `docs/conf.py`
+  does) to avoid Sphinx type-validation warnings.
 - **Parsers are cached per Sphinx env** in `env.coveragereport_data` — if you
   add a new parser, register it in `_load_coverage_file()` in
   `directives/coverage_common.py`.
@@ -57,6 +61,8 @@ nox -s docs
 
 - Do **not** commit `docs/_coverage/` or `docs/_build/` — both are gitignored
   and generated at build time.
-- Do **not** import `sphinx_needs` APIs at module level in directive files —
-  import inside `run()` or inside `_register_directives()` to avoid load-order
-  issues.
+- Do **not** import directive files at the top level of `coverage_report.py` —
+  all directive imports must stay inside `_register_directives()` to avoid
+  circular imports at extension load time. Module-level `sphinx_needs` imports
+  within a directive file are fine because the directive file itself is not
+  imported until `_register_directives()` runs.
