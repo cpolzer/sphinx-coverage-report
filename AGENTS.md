@@ -57,6 +57,14 @@ nox -s docs
 - Config values for need types use a 6-element list:
   `[directive-name, type-id, title-prefix, id-prefix, colour, style]`.
 
+## SpecDriven
+
+We are using the "obra superpowers". Document locations:
+Design Specs -> docs/superpowers/specs
+Implementation plan -> docs/superpowers/plans
+
+Always ensure those documents are available.
+
 ## What Not To Do
 
 - Do **not** commit `docs/_coverage/` or `docs/_build/` — both are gitignored
