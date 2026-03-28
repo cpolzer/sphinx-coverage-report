@@ -28,3 +28,4 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install nox && nox -s lint
+
