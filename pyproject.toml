@@ -37,6 +37,7 @@ dev = [
 version_provider = "pep621"
 tag_format = "v$version"
 bump_message = "chore: bump version $current_version → $new_version [skip ci]"
+annotated_tag = true
 
 [tool.flit.module]
 name = "sphinxcontrib.coverage_report"
