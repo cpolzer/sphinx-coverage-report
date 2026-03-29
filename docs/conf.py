@@ -9,6 +9,7 @@ version = release = os.environ.get("DOCS_VERSION", "local")
 extensions = [
     "sphinx_needs",
     "sphinxcontrib.coverage_report",
+    "myst_parser",
 ]
 
 html_theme = "furo"

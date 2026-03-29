@@ -27,6 +27,7 @@ docs = [
     "sphinx",
     "furo",
     "sphinx-needs>=6.0.0",
+    "myst-parser>=2.0",
 ]
 dev = [
     "commitizen>=3.0",
