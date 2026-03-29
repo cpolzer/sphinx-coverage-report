@@ -50,13 +50,11 @@ jobs:
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     needs: [tests, lint]
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - uses: actions/setup-python@v5
         with:
