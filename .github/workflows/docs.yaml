@@ -53,7 +53,9 @@ jobs:
 
   # ── Dev (main) ────────────────────────────────────────────────────────────
   docs-dev:
-    if: github.event_name == 'push' && github.ref_type == 'branch'
+    if: >-
+      github.event_name == 'push' && github.ref_type == 'branch'
+      && !startsWith(github.event.head_commit.message, 'chore: bump version')
     runs-on: ubuntu-latest
     permissions:
       contents: write
