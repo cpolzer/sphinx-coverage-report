@@ -1,8 +1,17 @@
-## Unreleased
+## v0.9.0 (2026-03-29)
 
 ### Feat
 
+- generate CHANGELOG.md automatically on version bump
+- replace changelog.rst with myst-parser include of CHANGELOG.md
 - add myst-parser for markdown support in docs
+
+### Fix
+
+- **dics**: fix docs build by excluding our specs and plans
+- add --yes to cz bump to prevent interactive prompt edge case
+
+## v0.8.3 (2026-03-29)
 
 ### Fix
 
