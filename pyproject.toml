@@ -36,7 +36,7 @@ dev = [
 [tool.commitizen]
 version_provider = "pep621"
 tag_format = "v$version"
-bump_message = "chore: bump version $current_version → $new_version [skip ci]"
+bump_message = "chore: bump version $current_version → $new_version"
 annotated_tag = true
 
 [tool.flit.module]
