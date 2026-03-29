@@ -16,3 +16,4 @@ html_theme = "furo"
 needs_id_regex = ".*"
 cr_rootdir = Path(__file__).parent
 cr_warn_no_data = True
+exclude_patterns = ['superpowers/**/*']
