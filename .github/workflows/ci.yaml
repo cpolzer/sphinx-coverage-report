@@ -74,7 +74,7 @@ jobs:
         id: cz
         run: |
           set +e
-          cz bump --yes
+          cz bump --changelog
           EXIT_CODE=$?
           set -e
           if [ $EXIT_CODE -eq 21 ] || [ $EXIT_CODE -eq 3 ]; then
