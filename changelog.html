@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="prev" title="Coverage" href="coverage.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>Changelog - sphinx-coverage-report 0.8.3 documentation</title>
+        <title>Changelog - sphinx-coverage-report 0.9.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=d111a655" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
@@ -170,7 +170,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">sphinx-coverage-report 0.8.3 documentation</div></a>
+      <a href="index.html"><div class="brand">sphinx-coverage-report 0.9.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -191,7 +191,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">sphinx-coverage-report 0.8.3 documentation</span>
+  <span class="sidebar-brand-text">sphinx-coverage-report 0.9.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -233,7 +233,7 @@
         </a>
         <div class="content-icon-container">
           <div class="view-this-page">
-  <a class="muted-link" href="_sources/changelog.rst.txt" title="View this page">
+  <a class="muted-link" href="_sources/changelog.md.txt" title="View this page">
     <svg><use href="#svg-eye"></use></svg>
     <span class="visually-hidden">View this page</span>
   </a>
@@ -253,17 +253,85 @@
         <article role="main" id="furo-main-content">
           <section id="changelog">
 <h1>Changelog<a class="headerlink" href="#changelog" title="Link to this heading">¶</a></h1>
-<section id="id1">
-<h2>0.1.0 (2026-03-26)<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h2>
+<section id="v0-9-0-2026-03-29">
+<h2>v0.9.0 (2026-03-29)<a class="headerlink" href="#v0-9-0-2026-03-29" title="Link to this heading">¶</a></h2>
+<section id="feat">
+<h3>Feat<a class="headerlink" href="#feat" title="Link to this heading">¶</a></h3>
 <ul class="simple">
-<li><p>Initial release.</p></li>
-<li><p>Parsers: Cobertura XML, lcov, coverage.py JSON.</p></li>
-<li><p>Directives: <code class="docutils literal notranslate"><span class="pre">coverage-results</span></code>, <code class="docutils literal notranslate"><span class="pre">coverage-module</span></code>, <code class="docutils literal notranslate"><span class="pre">coverage-package</span></code>,
-<code class="docutils literal notranslate"><span class="pre">coverage-function</span></code>, <code class="docutils literal notranslate"><span class="pre">coverage-report</span></code>.</p></li>
-<li><p>sphinx-needs integration: need types, extra fields, <code class="docutils literal notranslate"><span class="pre">cr_link()</span></code> dynamic function.</p></li>
-<li><p>Threshold-based <code class="docutils literal notranslate"><span class="pre">status</span></code> (passing/failing).</p></li>
-<li><p>Configurable warnings for missing coverage data.</p></li>
+<li><p>generate CHANGELOG.md automatically on version bump</p></li>
+<li><p>replace changelog.rst with myst-parser include of CHANGELOG.md</p></li>
+<li><p>add myst-parser for markdown support in docs</p></li>
 </ul>
+</section>
+<section id="fix">
+<h3>Fix<a class="headerlink" href="#fix" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>dics</strong>: fix docs build by excluding our specs and plans</p></li>
+<li><p>add –yes to cz bump to prevent interactive prompt edge case</p></li>
+</ul>
+</section>
+</section>
+<section id="v0-8-3-2026-03-29">
+<h2>v0.8.3 (2026-03-29)<a class="headerlink" href="#v0-8-3-2026-03-29" title="Link to this heading">¶</a></h2>
+<section id="id1">
+<h3>Fix<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>ci</strong>: skip CI and docs-dev on bump commits, handle exit code 3</p></li>
+</ul>
+</section>
+</section>
+<section id="v0-8-2-2026-03-29">
+<h2>v0.8.2 (2026-03-29)<a class="headerlink" href="#v0-8-2-2026-03-29" title="Link to this heading">¶</a></h2>
+<section id="id2">
+<h3>Fix<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>ci</strong>: again testing tag bump triggering gh pages deploy</p></li>
+</ul>
+</section>
+</section>
+<section id="v0-8-1-2026-03-29">
+<h2>v0.8.1 (2026-03-29)<a class="headerlink" href="#v0-8-1-2026-03-29" title="Link to this heading">¶</a></h2>
+<section id="id3">
+<h3>Fix<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p><strong>ci</strong>: testing autom tagging</p></li>
+</ul>
+</section>
+</section>
+<section id="v0-8-0-2026-03-29">
+<h2>v0.8.0 (2026-03-29)<a class="headerlink" href="#v0-8-0-2026-03-29" title="Link to this heading">¶</a></h2>
+<section id="id4">
+<h3>Feat<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>cr_link() dynamic function for cross-linking to test-case nodes</p></li>
+<li><p>coverage-module, coverage-package, coverage-function, coverage-report directives</p></li>
+<li><p>coverage-results standalone table directive</p></li>
+<li><p>extension setup, config values, sphinx-needs shim</p></li>
+<li><p>JsonParser — parse coverage.py JSON to normalized dicts</p></li>
+<li><p>LcovParser — parse lcov.info to normalized dicts</p></li>
+<li><p>CoberturaParser — parse coverage.xml to normalized dicts</p></li>
+</ul>
+</section>
+<section id="id5">
+<h3>Fix<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>use annotated tags so git push –follow-tags works</p></li>
+<li><p>add [skip ci] to bump commit message to prevent loop</p></li>
+<li><p>ensure .nojekyll on gh-pages to prevent Jekyll stripping _static/</p></li>
+<li><p>split combined imports in test fixture conf.py files (ruff E401)</p></li>
+<li><p>move pytest-cov to test extras, not docs</p></li>
+<li><p>log CSS registration errors at DEBUG, document add_field name-as-description</p></li>
+<li><p>JsonParser — use true line_rate for functions (covered/statements)</p></li>
+<li><p>LcovParser — add docstrings, wrap parse errors, strengthen tests</p></li>
+<li><p>CoberturaParser — wrap malformed XML error, strengthen package tests, add docstrings</p></li>
+</ul>
+</section>
+<section id="refactor">
+<h3>Refactor<a class="headerlink" href="#refactor" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>use SphinxDirective base, cache on env, use self.config</p></li>
+</ul>
+</section>
 </section>
 </section>
 
@@ -315,7 +383,29 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">Changelog</a><ul>
-<li><a class="reference internal" href="#id1">0.1.0 (2026-03-26)</a></li>
+<li><a class="reference internal" href="#v0-9-0-2026-03-29">v0.9.0 (2026-03-29)</a><ul>
+<li><a class="reference internal" href="#feat">Feat</a></li>
+<li><a class="reference internal" href="#fix">Fix</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#v0-8-3-2026-03-29">v0.8.3 (2026-03-29)</a><ul>
+<li><a class="reference internal" href="#id1">Fix</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#v0-8-2-2026-03-29">v0.8.2 (2026-03-29)</a><ul>
+<li><a class="reference internal" href="#id2">Fix</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#v0-8-1-2026-03-29">v0.8.1 (2026-03-29)</a><ul>
+<li><a class="reference internal" href="#id3">Fix</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#v0-8-0-2026-03-29">v0.8.0 (2026-03-29)</a><ul>
+<li><a class="reference internal" href="#id4">Feat</a></li>
+<li><a class="reference internal" href="#id5">Fix</a></li>
+<li><a class="reference internal" href="#refactor">Refactor</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -329,7 +419,7 @@
   </div>
 </div><script src="_static/jquery.js?v=5d32c60e"></script>
     <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
-    <script src="_static/documentation_options.js?v=7f96dc5e"></script>
+    <script src="_static/documentation_options.js?v=39bb1c6d"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
