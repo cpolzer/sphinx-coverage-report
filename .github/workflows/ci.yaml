@@ -46,3 +46,47 @@ jobs:
       - name: Check commit messages
         run: cz check --rev-range origin/${{ github.base_ref }}..HEAD
 
+  release:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [tests, lint]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install commitizen
+        run: pip install "commitizen>=3.0"
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Bump version
+        id: cz
+        run: |
+          set +e
+          cz bump --yes
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -eq 21 ]; then
+            echo "No releasable commits since last tag, skipping release."
+            echo "bumped=false" >> $GITHUB_OUTPUT
+          elif [ $EXIT_CODE -eq 0 ]; then
+            echo "bumped=true" >> $GITHUB_OUTPUT
+          else
+            exit $EXIT_CODE
+          fi
+
+      - name: Push bump commit and tag
+        if: steps.cz.outputs.bumped == 'true'
+        run: git push --follow-tags
+
