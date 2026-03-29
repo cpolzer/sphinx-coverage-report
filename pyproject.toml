@@ -28,6 +28,15 @@ docs = [
     "furo",
     "sphinx-needs>=6.0.0",
 ]
+dev = [
+    "commitizen>=3.0",
+    "pre-commit>=3.0",
+]
+
+[tool.commitizen]
+version_provider = "pep621"
+tag_format = "v$version"
+bump_message = "chore: bump version $current_version → $new_version"
 
 [tool.flit.module]
 name = "sphinxcontrib.coverage_report"
