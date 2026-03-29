@@ -10,3 +10,4 @@ build/
 docs/_coverage/
 docs/_build/
 .coverage
+.worktrees/
