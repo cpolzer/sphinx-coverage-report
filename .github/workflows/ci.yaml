@@ -7,6 +7,7 @@ on:
 
 jobs:
   tests:
+    if: "!startsWith(github.event.head_commit.message, 'chore: bump version')"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -21,6 +22,7 @@ jobs:
       - run: nox -s "tests-${{ matrix.python-version }}(sphinx_needs='${{ matrix.sphinx-needs }}')"
 
   lint:
+    if: "!startsWith(github.event.head_commit.message, 'chore: bump version')"
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -75,7 +77,7 @@ jobs:
           cz bump --yes
           EXIT_CODE=$?
           set -e
-          if [ $EXIT_CODE -eq 21 ]; then
+          if [ $EXIT_CODE -eq 21 ] || [ $EXIT_CODE -eq 3 ]; then
             echo "No releasable commits since last tag, skipping release."
             echo "bumped=false" >> $GITHUB_OUTPUT
           elif [ $EXIT_CODE -eq 0 ]; then
@@ -86,5 +88,5 @@ jobs:
 
       - name: Push bump commit and tag
         if: steps.cz.outputs.bumped == 'true'
-        run: git push origin main --follow-tags -o ci.skip 
+        run: git push origin main --follow-tags
 

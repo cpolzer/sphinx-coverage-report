@@ -4,7 +4,6 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, closed]
   push:
-    branches: [main]
     tags:
       - "v*"
 
@@ -51,31 +50,6 @@ jobs:
           preview-branch: gh-pages
           umbrella-dir: pr-preview
 
-  # ── Dev (main) ────────────────────────────────────────────────────────────
-  docs-dev:
-    if: github.event_name == 'push' && github.ref_type == 'branch'
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Build docs
-        run: |
-          pip install nox
-          DOCS_VERSION="dev+${GITHUB_SHA::7}" nox -s docs
-
-      - uses: JamesIves/github-pages-deploy-action@v4
-        with:
-          branch: gh-pages
-          folder: docs/_build/html
-          target-folder: dev
-          clean: true
-
   # ── Release (tag) ─────────────────────────────────────────────────────────
   docs-release:
     if: github.event_name == 'push' && github.ref_type == 'tag'
@@ -106,7 +80,6 @@ jobs:
           clean: true
           clean-exclude: |
             pr-preview/
-            dev/
             v*/
             .nojekyll
 
